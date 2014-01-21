@@ -42,6 +42,7 @@ inpos=706,inbits=72,outpos=63,outbytes=15
 
 inpos=778,inbits=13,outpos=78,outbytes=5,distance=-42
     64 20 6f 66 20
+    d     o  f    
 ```
 
 Note: ```inpos``` represents the input position in bits, whereas ```outpos``` represents the output position in bytes.
