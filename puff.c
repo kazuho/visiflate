@@ -853,7 +853,7 @@ int puff(unsigned char *dest,           /* pointer to destination pointer */
     if (setjmp(s.env) != 0)             /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     else {
-printf("i_pos\ti_bits\to_pos\to_bytes\tcopy\tdata\n");
+printf("i_pos\ti_bits\to_pos\to_bytes\tdist\tdata\n");
         /* process blocks until last block or error */
         do {
             last = bits(&s, 1);         /* one if last block */
