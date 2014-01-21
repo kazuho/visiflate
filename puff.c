@@ -152,15 +152,26 @@ local unsigned long numreadbits(struct state* s)
 
 local void dump_state(struct state* s, unsigned long inpos, long inbits, unsigned long outpos, unsigned outbytes, int distance)
 {
-	printf("%lu\t%lu\t%lu\t%u\t", inpos, inbits, outpos, outbytes);
+	unsigned i;
+	int ch;
+	printf("inpos=%lu,inbits=%lu,outpos=%lu,outbytes=%u", inpos, inbits, outpos, outbytes);
 	if (distance != 0) {
-		printf("%d\t", distance);
+		printf(",distance=%d\n", distance);
 	} else {
-		fputc('\t', stdout);
+		fputc('\n', stdout);
 	}
-	for (unsigned i = 0; i != outbytes; ++i) {
-		int ch = s->out[outpos + i];
-		fputc(' ' <= ch && ch < 0x7f ? ch : '.', stdout);
+	if (outbytes != 0) {
+		printf("   ");
+		for (i = 0; i != outbytes; ++i) {
+			ch = s->out[outpos + i];
+			printf(" %02x", ch);
+		}
+		printf("\n   ");
+		for (i = 0; i != outbytes; ++i) {
+			ch = s->out[outpos + i];
+			printf(" %c ", ' ' <= ch && ch < 0x7f ? ch : '.');
+		}
+		fputc('\n', stdout);
 	}
 	fputc('\n', stdout);
 }
@@ -854,7 +865,6 @@ int puff(unsigned char *dest,           /* pointer to destination pointer */
     if (setjmp(s.env) != 0)             /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     else {
-printf("i_pos\ti_bits\to_pos\to_bytes\tdist\tdata\n");
         /* process blocks until last block or error */
         do {
             last = bits(&s, 1);         /* one if last block */
