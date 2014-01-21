@@ -465,6 +465,8 @@ local int codes(struct state *s,
         12, 12, 13, 13};
 
     /* decode literals and length/distance pairs */
+unsigned long litpos = 0;
+unsigned long litcnt = 0;
     do {
 unsigned long pos = numreadbits(s);
         symbol = decode(s, lencode);
@@ -472,7 +474,8 @@ unsigned long pos = numreadbits(s);
             return symbol;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
-printf("%lu\t%lu\t%lu\t1\t\n", pos, numreadbits(s) - pos, s->outcnt);
+if (litpos == 0) litpos = pos;
+litcnt++;
             if (s->out != NIL) {
                 if (s->outcnt == s->outlen)
                     return 1;
@@ -481,6 +484,11 @@ printf("%lu\t%lu\t%lu\t1\t\n", pos, numreadbits(s) - pos, s->outcnt);
             s->outcnt++;
         }
         else if (symbol > 256) {        /* length */
+if (litpos != 0) {
+	printf("%lu\t%lu\t%lu\t%lu\t\n", litpos, pos - litpos, s->outcnt - litcnt, litcnt);
+	litpos = 0;
+	litcnt = 0;
+}
             /* get and compute length */
             symbol -= 257;
             if (symbol >= 29)
@@ -516,6 +524,10 @@ printf("%lu\t%lu\t%lu\t%d\t%d\n", pos, numreadbits(s) - pos, s->outcnt, len, -di
                 s->outcnt += len;
         }
     } while (symbol != 256);            /* end of block symbol */
+
+if (litpos != 0) {
+	printf("%lu\t%lu\t%lu\t%lu\t\n", litpos, numreadbits(s) - litpos, s->outcnt - litcnt, litcnt);
+}
 
     /* done with a valid fixed or dynamic block */
     return 0;
