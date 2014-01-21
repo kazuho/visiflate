@@ -150,6 +150,21 @@ local unsigned long numreadbits(struct state* s)
 	return s->incnt * 8 + 8 - s->bitcnt;
 }
 
+local void dump_state(struct state* s, unsigned long inpos, long inbits, unsigned long outpos, unsigned outbytes, int distance)
+{
+	printf("%lu\t%lu\t%lu\t%u\t", inpos, inbits, outpos, outbytes);
+	if (distance != 0) {
+		printf("%d\t", distance);
+	} else {
+		fputc('\t', stdout);
+	}
+	for (unsigned i = 0; i != outbytes; ++i) {
+		int ch = s->out[outpos + i];
+		fputc(' ' <= ch && ch < 0x7f ? ch : '.', stdout);
+	}
+	fputc('\n', stdout);
+}
+
 /*
  * Process a stored block.
  *
@@ -169,7 +184,7 @@ local unsigned long numreadbits(struct state* s)
  */
 local int stored(struct state *s)
 {
-unsigned long pos = numreadbits(s);
+    unsigned long pos = numreadbits(s);
     unsigned len;       /* length of stored block */
 
     /* discard leftover bits from current byte (assumes s->bitcnt < 8) */
@@ -185,8 +200,6 @@ unsigned long pos = numreadbits(s);
         s->in[s->incnt++] != ((~len >> 8) & 0xff))
         return -2;                              /* didn't match complement! */
 
-printf("%lu\t%lu\t%lu\t%u\t\n", pos, numreadbits(s) + 8 * len - pos, s->outcnt, len);
-
     /* copy len bytes from in to out */
     if (s->incnt + len > s->inlen)
         return 2;                               /* not enough input */
@@ -195,6 +208,7 @@ printf("%lu\t%lu\t%lu\t%u\t\n", pos, numreadbits(s) + 8 * len - pos, s->outcnt, 
             return 1;                           /* not enough output space */
         while (len--)
             s->out[s->outcnt++] = s->in[s->incnt++];
+        dump_state(s, pos, numreadbits(s) - pos, s->outcnt - len, len, 0);
     }
     else {                                      /* just scanning */
         s->outcnt += len;
@@ -447,7 +461,7 @@ local int codes(struct state *s,
                 const struct huffman *distcode)
 {
     int symbol;         /* decoded symbol */
-    int len;            /* length for copy */
+    int len, len_;            /* length for copy */
     unsigned dist;      /* distance for copy */
     static const short lens[29] = { /* Size base for length codes 257..285 */
         3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
@@ -484,16 +498,16 @@ litcnt++;
             s->outcnt++;
         }
         else if (symbol > 256) {        /* length */
-if (litpos != 0) {
-	printf("%lu\t%lu\t%lu\t%lu\t\n", litpos, pos - litpos, s->outcnt - litcnt, litcnt);
-	litpos = 0;
-	litcnt = 0;
-}
+            if (litpos != 0) {
+                dump_state(s, litpos, pos - litpos, s->outcnt - litcnt, litcnt, 0);
+				litpos = 0;
+				litcnt = 0;
+			}
             /* get and compute length */
             symbol -= 257;
             if (symbol >= 29)
                 return -10;             /* invalid fixed code */
-            len = lens[symbol] + bits(s, lext[symbol]);
+            len = len_ = lens[symbol] + bits(s, lext[symbol]);
 
             /* get and check distance */
             symbol = decode(s, distcode);
@@ -506,7 +520,6 @@ if (litpos != 0) {
 #endif
 
             /* copy length bytes from distance bytes back */
-printf("%lu\t%lu\t%lu\t%d\t%d\n", pos, numreadbits(s) - pos, s->outcnt, len, -dist);
             if (s->out != NIL) {
                 if (s->outcnt + len > s->outlen)
                     return 1;
@@ -519,6 +532,7 @@ printf("%lu\t%lu\t%lu\t%d\t%d\n", pos, numreadbits(s) - pos, s->outcnt, len, -di
                             s->out[s->outcnt - dist];
                     s->outcnt++;
                 }
+				dump_state(s, pos, numreadbits(s) - pos, s->outcnt - len_, len_, -dist);
             }
             else
                 s->outcnt += len;
@@ -839,7 +853,7 @@ int puff(unsigned char *dest,           /* pointer to destination pointer */
     if (setjmp(s.env) != 0)             /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     else {
-printf("i_pos\ti_bits\to_pos\to_bytes\tcopy\n");
+printf("i_pos\ti_bits\to_pos\to_bytes\tcopy\tdata\n");
         /* process blocks until last block or error */
         do {
             last = bits(&s, 1);         /* one if last block */

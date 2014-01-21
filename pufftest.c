@@ -87,7 +87,7 @@ local void *load(const char *name, size_t *len)
 
 int main(int argc, char **argv)
 {
-    int ret, put = 0, fail = 0;
+    int ret;
     unsigned skip = 0;
     char *arg, *name = NULL;
     unsigned char *source = NULL, *dest;
@@ -97,11 +97,7 @@ int main(int argc, char **argv)
     /* process arguments */
     while (arg = *++argv, --argc)
         if (arg[0] == '-') {
-            if (arg[1] == 'w' && arg[2] == 0)
-                put = 1;
-            else if (arg[1] == 'f' && arg[2] == 0)
-                fail = 1, put = 1;
-            else if (arg[1] >= '0' && arg[1] <= '9')
+            if (arg[1] >= '0' && arg[1] <= '9')
                 skip = (unsigned)atoi(arg + 1);
             else {
                 fprintf(stderr, "invalid option %s\n", arg);
@@ -132,31 +128,18 @@ int main(int argc, char **argv)
     }
 
     /* test inflate data with offset skip */
+	destlen = 16 * 1024 * 1024;
+    dest = malloc(destlen);
     len -= skip;
     sourcelen = (unsigned long)len;
-    ret = puff(NIL, &destlen, source + skip, &sourcelen);
+    ret = puff(dest, &destlen, source + skip, &sourcelen);
+	free(dest);
     if (ret)
         fprintf(stderr, "puff() failed with return code %d\n", ret);
     else {
         fprintf(stderr, "puff() succeeded uncompressing %lu bytes\n", destlen);
         if (sourcelen < len) fprintf(stderr, "%lu compressed bytes unused\n",
                                      len - sourcelen);
-    }
-
-    /* if requested, inflate again and write decompressd data to stdout */
-    if (put && ret == 0) {
-        if (fail)
-            destlen >>= 1;
-        dest = malloc(destlen);
-        if (dest == NULL) {
-            fprintf(stderr, "memory allocation failure\n");
-            free(source);
-            return 4;
-        }
-        puff(dest, &destlen, source + skip, &sourcelen);
-        SET_BINARY_MODE(stdout);
-        fwrite(dest, 1, destlen, stdout);
-        free(dest);
     }
 
     /* clean up */
