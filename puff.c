@@ -79,6 +79,7 @@
  * 2.3  21 Jan 2013     - Check for invalid code length codes in dynamic blocks
  */
 
+#include <stdio.h>
 #include <setjmp.h>             /* for setjmp(), longjmp(), and jmp_buf */
 #include "puff.h"               /* prototype for puff() */
 
@@ -144,6 +145,11 @@ local int bits(struct state *s, int need)
     return (int)(val & ((1L << need) - 1));
 }
 
+local unsigned long numreadbits(struct state* s)
+{
+	return s->incnt * 8 + 8 - s->bitcnt;
+}
+
 /*
  * Process a stored block.
  *
@@ -163,6 +169,7 @@ local int bits(struct state *s, int need)
  */
 local int stored(struct state *s)
 {
+unsigned long pos = numreadbits(s);
     unsigned len;       /* length of stored block */
 
     /* discard leftover bits from current byte (assumes s->bitcnt < 8) */
@@ -177,6 +184,8 @@ local int stored(struct state *s)
     if (s->in[s->incnt++] != (~len & 0xff) ||
         s->in[s->incnt++] != ((~len >> 8) & 0xff))
         return -2;                              /* didn't match complement! */
+
+printf("%lu\t%lu\t%lu\t%u\tstored\n", pos, numreadbits(s) + 8 * len - pos, s->outcnt, len);
 
     /* copy len bytes from in to out */
     if (s->incnt + len > s->inlen)
@@ -457,11 +466,13 @@ local int codes(struct state *s,
 
     /* decode literals and length/distance pairs */
     do {
+unsigned long pos = numreadbits(s);
         symbol = decode(s, lencode);
         if (symbol < 0)
             return symbol;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
+printf("%lu\t%lu\t%lu\t1\tdirect\n", pos, numreadbits(s) - pos, s->outcnt);
             if (s->out != NIL) {
                 if (s->outcnt == s->outlen)
                     return 1;
@@ -487,6 +498,7 @@ local int codes(struct state *s,
 #endif
 
             /* copy length bytes from distance bytes back */
+printf("%lu\t%lu\t%lu\t%d\tcopy\n", pos, numreadbits(s) - pos, s->outcnt, len);
             if (s->out != NIL) {
                 if (s->outcnt + len > s->outlen)
                     return 1;
@@ -815,6 +827,7 @@ int puff(unsigned char *dest,           /* pointer to destination pointer */
     if (setjmp(s.env) != 0)             /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     else {
+printf("i_pos\ti_bits\to_pos\to_bytes\tmode\n");
         /* process blocks until last block or error */
         do {
             last = bits(&s, 1);         /* one if last block */
