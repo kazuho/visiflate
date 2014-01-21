@@ -185,7 +185,7 @@ local void dump_state(struct state* s, unsigned long inpos, long inbits, unsigne
 local int stored(struct state *s)
 {
     unsigned long pos = numreadbits(s);
-    unsigned len;       /* length of stored block */
+    unsigned len, len_;       /* length of stored block */
 
     /* discard leftover bits from current byte (assumes s->bitcnt < 8) */
     s->bitbuf = 0;
@@ -196,6 +196,7 @@ local int stored(struct state *s)
         return 2;                               /* not enough input */
     len = s->in[s->incnt++];
     len |= s->in[s->incnt++] << 8;
+	len_ = len;
     if (s->in[s->incnt++] != (~len & 0xff) ||
         s->in[s->incnt++] != ((~len >> 8) & 0xff))
         return -2;                              /* didn't match complement! */
@@ -208,7 +209,7 @@ local int stored(struct state *s)
             return 1;                           /* not enough output space */
         while (len--)
             s->out[s->outcnt++] = s->in[s->incnt++];
-        dump_state(s, pos, numreadbits(s) - pos, s->outcnt - len, len, 0);
+        dump_state(s, pos, numreadbits(s) - pos, s->outcnt - len_, len_, 0);
     }
     else {                                      /* just scanning */
         s->outcnt += len;
@@ -540,7 +541,7 @@ litcnt++;
     } while (symbol != 256);            /* end of block symbol */
 
 if (litpos != 0) {
-	printf("%lu\t%lu\t%lu\t%lu\t\n", litpos, numreadbits(s) - litpos, s->outcnt - litcnt, litcnt);
+	dump_state(s, litpos, numreadbits(s) - litpos, s->outcnt - litcnt, litcnt, 0);
 }
 
     /* done with a valid fixed or dynamic block */
