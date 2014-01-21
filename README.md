@@ -12,25 +12,36 @@ Usage
 % ./puff -10 alice.txt.gz
 puff() succeeded uncompressing 1328 bytes
 8 compressed bytes unused
-i_pos   i_bits  o_pos   o_bytes dist    data
-404     224     0       45              Alice was beginning to get very tired of sitt
-628     12      45      4       -29     ing 
-640     30      49      6               by her
-670     11      55      3       -15      si
-681     9       58      2               st
-690     10      60      3       -7      er 
-700     71      63      15              on the bank, an
-771     13      78      5       -42     d of 
-784     17      83      3               hav
-801     12      86      4       -41     ing 
-813     19      90      4               noth
-832     15      94      7       -78     ing to 
-847     19      101     3               do:
+inpos=406,inbits=224,outpos=0,outbytes=45
+    41 6c 69 63 65 20 77 61 73 20 62 65 67 69 6e 6e 69 6e 67 20 74 6f 20 67 65 74 20 76 65 72 79 20 74 69 72 65 64 20 6f 66 20 73 69 74 74
+    A  l  i  c  e     w  a  s     b  e  g  i  n  n  i  n  g     t  o     g  e  t     v  e  r  y     t  i  r  e  d     o  f     s  i  t  t 
+
+inpos=630,inbits=13,outpos=45,outbytes=4,distance=-29
+    69 6e 67 20
+    i  n  g    
+
+inpos=643,inbits=32,outpos=49,outbytes=6
+    62 79 20 68 65 72
+    b  y     h  e  r 
+
+inpos=675,inbits=11,outpos=55,outbytes=3,distance=-15
+    20 73 69
+       s  i 
+
+inpos=686,inbits=9,outpos=58,outbytes=2
+    73 74
+    s  t 
+
+inpos=695,inbits=11,outpos=60,outbytes=3,distance=-7
+    65 72 20
+    e  r    
+
+inpos=706,inbits=72,outpos=63,outbytes=15
+    6f 6e 20 74 68 65 20 62 61 6e 6b 2c 20 61 6e
+    o  n     t  h  e     b  a  n  k  ,     a  n 
+
+inpos=778,inbits=13,outpos=78,outbytes=5,distance=-42
+    64 20 6f 66 20
 ```
 
-* i_pos   - input offset (in bits)
-* i_bits  - bits used in input
-* o_pos   - output offset (in bytes)
-* o_bytes - number of output bytes
-* dist    - distance of the text to be copied from (or none if not copied)
-* data    - corresponding data
+Note: ```inpos``` represents the input position in bits, whereas ```outpos``` represents the output position in bytes.
