@@ -185,7 +185,7 @@ unsigned long pos = numreadbits(s);
         s->in[s->incnt++] != ((~len >> 8) & 0xff))
         return -2;                              /* didn't match complement! */
 
-printf("%lu\t%lu\t%lu\t%u\tstored\n", pos, numreadbits(s) + 8 * len - pos, s->outcnt, len);
+printf("%lu\t%lu\t%lu\t%u\t\n", pos, numreadbits(s) + 8 * len - pos, s->outcnt, len);
 
     /* copy len bytes from in to out */
     if (s->incnt + len > s->inlen)
@@ -472,7 +472,7 @@ unsigned long pos = numreadbits(s);
             return symbol;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
-printf("%lu\t%lu\t%lu\t1\tdirect\n", pos, numreadbits(s) - pos, s->outcnt);
+printf("%lu\t%lu\t%lu\t1\t\n", pos, numreadbits(s) - pos, s->outcnt);
             if (s->out != NIL) {
                 if (s->outcnt == s->outlen)
                     return 1;
@@ -498,7 +498,7 @@ printf("%lu\t%lu\t%lu\t1\tdirect\n", pos, numreadbits(s) - pos, s->outcnt);
 #endif
 
             /* copy length bytes from distance bytes back */
-printf("%lu\t%lu\t%lu\t%d\tcopy\n", pos, numreadbits(s) - pos, s->outcnt, len);
+printf("%lu\t%lu\t%lu\t%d\t%d\n", pos, numreadbits(s) - pos, s->outcnt, len, -dist);
             if (s->out != NIL) {
                 if (s->outcnt + len > s->outlen)
                     return 1;
@@ -827,7 +827,7 @@ int puff(unsigned char *dest,           /* pointer to destination pointer */
     if (setjmp(s.env) != 0)             /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     else {
-printf("i_pos\ti_bits\to_pos\to_bytes\tmode\n");
+printf("i_pos\ti_bits\to_pos\to_bytes\tcopy\n");
         /* process blocks until last block or error */
         do {
             last = bits(&s, 1);         /* one if last block */
